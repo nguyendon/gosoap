@@ -181,10 +181,15 @@ func (c *Client) Do(req *Request) (res *Response, err error) {
     p.SoapAction = fmt.Sprintf("%s/%s/%s", c.URL, c.Definitions.Services[0].Name, req.Method)
   }
 
+  fmt.Println("req")
+  fmt.Println(req)
   p.Payload, err = xml.MarshalIndent(p, "", "    ")
   if err != nil {
     return nil, err
   }
+
+  fmt.Println("p")
+  fmt.Println(p)
 
   b, err := p.doRequest(c.Definitions.Services[0].Ports[0].SoapAddresses[0].Location)
   if err != nil {
@@ -248,6 +253,8 @@ func (p *process) doRequest(url string) ([]byte, error) {
     req.Header.Add("SOAPAction", p.SoapAction)
   }
 
+  fmt.Println("req.Body")
+  fmt.Println(req.Body)
   resp, err := p.httpClient().Do(req)
   if err != nil {
     return nil, err
