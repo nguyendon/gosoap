@@ -85,11 +85,27 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
 				},
 			}
 
+    // Check for $attributes and add them to the start element
+    /*
+    if attrs, ok := data["$attributes"].(map[string]interface{}); ok {
+      for attrName, attrValue := range attrs {
+        attr := xml.Attr{Name: xml.Name{Local: attrName}, Value: fmt.Sprintf("%v", attrValue)}
+        start.Attr = append(start.Attr, attr)
+      }
+    }
+    */
+
       if key.String() == "$attributes" || key.String() == "DeviceNumber" || key.String() == "DeviceName" || key.String() == "DeviceType" {
         fmt.Println("key.String()")
         fmt.Println(key.String())
         fmt.Println("v.Kind()")
         fmt.Println(v.Kind())
+        fmt.Println("v.MapIndex(key)")
+        fmt.Println(v.MapIndex(key))
+        fmt.Println("v.MapIndex(key).Interface()")
+        fmt.Println(v.MapIndex(key).Interface())
+        fmt.Println("v.MapIndex(key).Interface().(map[string]interface{})")
+        fmt.Println(v.MapIndex(key).Interface().(map[string]interface{}))
       }
       if key.String() == "$attributes" {
         isAttribute = true
@@ -266,4 +282,54 @@ func (tokens *tokenData) endBody(m string) {
 	}
 
 	tokens.data = append(tokens.data, r, b)
+}
+
+// customMarshalXML handles the map and encodes it into XML.
+// If a "$attributes" key is found, its value is treated as attributes.
+
+//func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
+func customMarshalXML(data map[string]interface{}, parentName string) ([]byte, error) {
+  // Create an encoder and a buffer to hold the XML
+  buf := new(bytes.Buffer)
+  encoder := xml.NewEncoder(buf)
+
+  start := xml.StartElement{Name: xml.Name{Local: parentName}}
+
+  // Check for $attributes and add them to the start element
+  if attrs, ok := data["$attributes"].(map[string]interface{}); ok {
+    for attrName, attrValue := range attrs {
+      attr := xml.Attr{Name: xml.Name{Local: attrName}, Value: fmt.Sprintf("%v", attrValue)}
+      start.Attr = append(start.Attr, attr)
+    }
+  }
+
+  // Start the element
+  encoder.EncodeToken(start)
+
+  // Encode child elements
+  for key, value := range data {
+    if key == "$attributes" {
+      continue
+    }
+
+    switch child := value.(type) {
+    case map[string]interface{}:
+      childXML, err := customMarshalXML(child, key)
+      if err != nil {
+        return nil, err
+      }
+      buf.Write(childXML)
+    default:
+      // Handle other types as needed (e.g., string, int, slices)
+      encoder.EncodeElement(child, xml.StartElement{Name: xml.Name{Local: key}})
+    }
+  }
+
+  // End the element
+  encoder.EncodeToken(xml.EndElement{Name: start.Name})
+
+  // Flush to ensure all XML is written to the buffer
+  encoder.Flush()
+
+  return buf.Bytes(), nil
 }
