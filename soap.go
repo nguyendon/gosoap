@@ -7,6 +7,7 @@ import (
   "fmt"
   "io"
   "io/ioutil"
+  "log"
   "net/http"
   "net/http/httputil"
   "net/url"
@@ -272,7 +273,7 @@ func (p *process) doRequest(url string) ([]byte, error) {
     log.Fatal(err)
   }
 
-  log.Println(string(responseBody))
+  fmt.Println(string(responseBody))
 
 
   if resp.StatusCode < 200 || resp.StatusCode >= 400 {
