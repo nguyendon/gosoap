@@ -96,7 +96,7 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
     }
     */
 
-      if key.String() == "$attributes" || key.String() == "DeviceNumber" || key.String() == "DeviceName" || key.String() == "DeviceType" {
+      if key.String() == "$attributes" || key.String() == "DeviceNumber" || key.String() == "DeviceInformation" || key.String() == "DeviceType" {
         fmt.Println("key.String()")
         fmt.Println(key.String())
         fmt.Println("v.Kind()")
@@ -105,8 +105,8 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
         fmt.Println(v.MapIndex(key))
         fmt.Println("v.MapIndex(key).Interface()")
         fmt.Println(v.MapIndex(key).Interface())
-        fmt.Println("v.MapIndex(key).Interface().(map[string]interface{})")
-        fmt.Println(v.MapIndex(key).Interface().(map[string]interface{}))
+        fmt.Println("have attribute?")
+        fmt.Println(v.MapIndex(key).Interface().(map[string]interface{})["$attributes"])
       }
       if key.String() == "$attributes" {
         isAttribute = true
