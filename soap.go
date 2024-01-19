@@ -255,6 +255,27 @@ func (p *process) doRequest(url string) ([]byte, error) {
 
   fmt.Println("req.Body")
   fmt.Println(req.Body)
+
+  req.body = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:acc="http://www.symxchange.generated.symitar.com/account" xmlns:com="http://www.symxchange.generated.symitar.com/v1/common/dto/common">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <acc:getAccount>
+         <!--Optional:-->
+         <Request MessageId="getAccount">
+            <AccountNumber>12661</AccountNumber>
+            <Credentials>
+               <UserNumberCredentials>
+                  <UserNumber>{{episys_usernumber}}</UserNumber>
+                  <Password>{{episys_password}}</Password>
+               </UserNumberCredentials>
+            </Credentials>
+            <DeviceInformation DeviceType="LIBUM" DeviceNumber="20627"/>
+         </Request>
+      </acc:getAccount>
+   </soapenv:Body>
+</soapenv:Envelope>
+`
+
   resp, err := p.httpClient().Do(req)
   if err != nil {
     return nil, err
