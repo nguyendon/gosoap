@@ -107,7 +107,7 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
       }
 
 			tokens.data = append(tokens.data, t)
-      isChildAnAttribute := tokens.recursiveEncode(v.MapIndex(key).Interface())
+      tokens.recursiveEncode(v.MapIndex(key).Interface())
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.Slice:
