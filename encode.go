@@ -96,24 +96,20 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
     }
     */
 
+			tokens.data = append(tokens.data, t)
+
       // Check if v.MapIndex(key) is a map[string]interface{}
       // If it is, then check if it has a $attributes key
       // If it does, then we need to treat this as an attribute
       fmt.Println(key.String())
-      if key.String() == "DeviceInformation" {
-        fmt.Println(v.MapIndex(key).Kind() == reflect.Map)
-        fmt.Println("DeviceInformation")
-        fmt.Println(v.MapIndex(key).Interface())
-        fmt.Println(v.MapIndex(key).Interface().(map[string]interface{})["$attributes"])
-        fmt.Println("has attribute 1")
-      }
-      if _, ok := v.MapIndex(key).Interface().(map[string]interface{})["$attributes"]; ok {
+      if (fmt.Println(v.MapIndex(key).Interface().(map[string]interface{})["$attributes"]) != nil) {
+        fmt.Println("has attribute")
         isAttribute = true
-        fmt.Println("has attribute 2")
+        fmt.Println("short circuiting")
+      } else {
+        tokens.recursiveEncode(v.MapIndex(key).Interface())
       }
 
-			tokens.data = append(tokens.data, t)
-      tokens.recursiveEncode(v.MapIndex(key).Interface())
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.Slice:
