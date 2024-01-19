@@ -72,6 +72,12 @@ type tokenData struct {
 
 func (tokens *tokenData) recursiveEncode(hm interface{}) {
 	v := reflect.ValueOf(hm)
+  fmt.Println("hm")
+  fmt.Println(hm)
+  fmt.Println("v")
+  fmt.Println(v)
+  fmt.Println("v.Kind()")
+  fmt.Println(v.Kind())
 
 	switch v.Kind() {
 	case reflect.Map:
