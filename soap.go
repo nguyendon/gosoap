@@ -189,6 +189,10 @@ func (c *Client) Do(req *Request) (res *Response, err error) {
   fmt.Println(req.Params)
   fmt.Println("flag 0")
   p.Payload, err = xml.MarshalIndent(p, "", "    ")
+  var x;
+  var temp = xml.Unmarshal(p.Payload, &x)
+  fmt.Println("temp")
+  fmt.Println(temp)
   if err != nil {
     return nil, err
   }
