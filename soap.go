@@ -275,6 +275,9 @@ func (p *process) doRequest(url string) ([]byte, error) {
    </soapenv:Body>
 </soapenv:Envelope>
 `
+  fmt.Println("req.Body adjusted")
+  fmt.Println(req.Body)
+
 
   resp, err := p.httpClient().Do(req)
   if err != nil {
