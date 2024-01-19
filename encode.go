@@ -100,6 +100,11 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
       // If it is, then check if it has a $attributes key
       // If it does, then we need to treat this as an attribute
       if v.MapIndex(key).Kind() == reflect.Map {
+        if key.String() == "DeviceInformation" {
+          fmt.Println("DeviceInformation")
+          fmt.Println(v.MapIndex(key).Interface())
+          fmt.Println(v.MapIndex(key).Interface().(map[string]interface{})["$attributes"])
+        }
         if _, ok := v.MapIndex(key).Interface().(map[string]interface{})["$attributes"]; ok {
           isAttribute = true
           fmt.Println("has attribute")
