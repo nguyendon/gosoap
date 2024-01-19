@@ -102,7 +102,8 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
       // If it is, then check if it has a $attributes key
       // If it does, then we need to treat this as an attribute
       fmt.Println(key.String())
-      if (fmt.Println(v.MapIndex(key).Interface().(map[string]interface{})["$attributes"]) != nil) {
+
+      if (v.MapIndex(key).Interface().(map[string]interface{})["$attributes"] != nil) {
         fmt.Println("has attribute")
         isAttribute = true
         fmt.Println("short circuiting")
