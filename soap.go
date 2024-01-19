@@ -273,7 +273,7 @@ func (p *process) doRequest(url string) ([]byte, error) {
   }
 
   // Unmarshal response body
-  _, err := ioutil.ReadAll(resp.Body)
+  _, err = ioutil.ReadAll(resp.Body)
   if err != nil {
     log.Fatal(err)
   }
