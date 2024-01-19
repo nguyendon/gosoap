@@ -85,7 +85,10 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
 				},
 			}
 
-      if key.String() in ["$attribute", "DeviceNumber", "DeviceName", "DeviceType"] {
+      if key.String() == "$attribute"
+        || key.String() == "DeviceNumber"
+        || key.String() == "DeviceName"
+        || key.String() == "DeviceType" {
         fmt.Println("key.String()")
         fmt.Println(key.String())
         fmt.Println("v.Kind()")
