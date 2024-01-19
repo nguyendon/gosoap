@@ -269,11 +269,11 @@ func (p *process) doRequest(url string) ([]byte, error) {
     if err != nil {
       return nil, err
     }
-    p.Client.config.ogger.LogResponse(p.Request.Method, dump)
+    p.Client.config.Logger.LogResponse(p.Request.Method, dump)
   }
 
   // Unmarshal response body
-  responseBody, err := ioutil.ReadAll(resp.Body)
+  _, err := ioutil.ReadAll(resp.Body)
   if err != nil {
     log.Fatal(err)
   }
