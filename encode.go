@@ -88,6 +88,12 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 					Local: key.String(),
 				},
 			}
+      fmt.Println("key.String()")
+      fmt.Println(key.String())
+      fmt.Println("t")
+      fmt.Println(t)
+      fmt.Println("tokens.data")
+      fmt.Println(tokens.data)
 
 			tokens.data = append(tokens.data, t)
 			tokens.recursiveEncode(v.MapIndex(key).Interface())
