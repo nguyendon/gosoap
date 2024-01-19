@@ -266,6 +266,15 @@ func (p *process) doRequest(url string) ([]byte, error) {
   fmt.Println("resp.Body")
   fmt.Println(resp.Body)
 
+  // Unmarshal response body
+  responseBody, err := ioutil.ReadAll(resp.Body)
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  log.Println(string(responseBody))
+
+
   if resp.StatusCode < 200 || resp.StatusCode >= 400 {
     if !(p.Client.config != nil && p.Client.config.Dump) {
       _, err := io.Copy(ioutil.Discard, resp.Body)
