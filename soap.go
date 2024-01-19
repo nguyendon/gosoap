@@ -187,12 +187,9 @@ func (c *Client) Do(req *Request) (res *Response, err error) {
   fmt.Println(req.Method)
   fmt.Println("req.Params")
   fmt.Println(req.Params)
-  fmt.Println("flag 0")
   fmt.Println("p1")
   fmt.Println(p)
   p.Payload, err = xml.MarshalIndent(p, "", "    ")
-  fmt.Println("p2")
-  fmt.Println(p)
   if err != nil {
     return nil, err
   }
@@ -234,7 +231,9 @@ type process struct {
 // doRequest makes new request to the server using the c.Method, c.URL and the body.
 // body is enveloped in Do method
 func (p *process) doRequest(url string) ([]byte, error) {
+  // At this point p.Payload is the byte representation of the envelope
   req, err := http.NewRequest("POST", url, bytes.NewBuffer(p.Payload))
+  // At this point it is in the envelope as a request body
   if err != nil {
     return nil, err
   }
@@ -259,10 +258,6 @@ func (p *process) doRequest(url string) ([]byte, error) {
     req.Header.Add("SOAPAction", p.SoapAction)
   }
 
-  fmt.Println("flag 1")
-  fmt.Println("req.Body")
-  fmt.Println(req.Body)
-
   resp, err := p.httpClient().Do(req)
   if err != nil {
     return nil, err
@@ -274,22 +269,14 @@ func (p *process) doRequest(url string) ([]byte, error) {
     if err != nil {
       return nil, err
     }
-    p.Client.config.Logger.LogResponse(p.Request.Method, dump)
+    p.Client.config.ogger.LogResponse(p.Request.Method, dump)
   }
-
-  fmt.Println("resp")
-  fmt.Println(resp)
-  fmt.Println("resp.Body")
-  fmt.Println(resp.Body)
 
   // Unmarshal response body
   responseBody, err := ioutil.ReadAll(resp.Body)
   if err != nil {
     log.Fatal(err)
   }
-
-  fmt.Println(string(responseBody))
-
 
   if resp.StatusCode < 200 || resp.StatusCode >= 400 {
     if !(p.Client.config != nil && p.Client.config.Dump) {
@@ -342,4 +329,52 @@ type SoapHeader struct {
 type SoapBody struct {
   XMLName  struct{} `xml:"Body"`
   Contents []byte   `xml:",innerxml"`
+}
+
+// customMarshalXML handles the map and encodes it into XML.
+// If a "$attributes" key is found, its value is treated as attributes.
+func customMarshalXML(data map[string]interface{}, parentName string) ([]byte, error) {
+  // Create an encoder and a buffer to hold the XML
+  buf := new(bytes.Buffer)
+  encoder := xml.NewEncoder(buf)
+
+  start := xml.StartElement{Name: xml.Name{Local: parentName}}
+
+  // Check for $attributes and add them to the start element
+  if attrs, ok := data["$attributes"].(map[string]interface{}); ok {
+    for attrName, attrValue := range attrs {
+      attr := xml.Attr{Name: xml.Name{Local: attrName}, Value: fmt.Sprintf("%v", attrValue)}
+      start.Attr = append(start.Attr, attr)
+    }
+  }
+
+  // Start the element
+  encoder.EncodeToken(start)
+
+  // Encode child elements
+  for key, value := range data {
+    if key == "$attributes" {
+      continue
+    }
+
+    switch child := value.(type) {
+    case map[string]interface{}:
+      childXML, err := customMarshalXML(child, key)
+      if err != nil {
+        return nil, err
+      }
+      buf.Write(childXML)
+    default:
+      // Handle other types as needed (e.g., string, int, slices)
+      encoder.EncodeElement(child, xml.StartElement{Name: xml.Name{Local: key}})
+    }
+  }
+
+  // End the element
+  encoder.EncodeToken(xml.EndElement{Name: start.Name})
+
+  // Flush to ensure all XML is written to the buffer
+  encoder.Flush()
+
+  return buf.Bytes(), nil
 }
