@@ -96,30 +96,18 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
     }
     */
 
-      if key.String() == "$attributes" || key.String() == "DeviceNumber" || key.String() == "DeviceInformation" || key.String() == "DeviceType" {
-        fmt.Println("key.String()")
-        fmt.Println(key.String())
-        fmt.Println("v.Kind()")
-        fmt.Println(v.Kind())
-        fmt.Println("v.MapIndex(key)")
-        fmt.Println(v.MapIndex(key))
-        fmt.Println("v.MapIndex(key).Interface()")
-        fmt.Println(v.MapIndex(key).Interface())
-        fmt.Println("have attribute?")
-        fmt.Println(v.MapIndex(key).Interface().(map[string]interface{})["$attributes"])
-      }
-      if key.String() == "$attributes" {
-        isAttribute = true
+      // Check if v.MapIndex(key) is a map[string]interface{}
+      // If it is, then check if it has a $attributes key
+      // If it does, then we need to treat this as an attribute
+      if v.MapIndex(key).Kind() == reflect.Map {
+        if _, ok := v.MapIndex(key).Interface().(map[string]interface{})["$attributes"]; ok {
+          isAttribute = true
+          fmt.Println("has attribute")
+        }
       }
 
 			tokens.data = append(tokens.data, t)
       isChildAnAttribute := tokens.recursiveEncode(v.MapIndex(key).Interface())
-      if isChildAnAttribute {
-        fmt.Println("isChildAnAttribute")
-        fmt.Println(isChildAnAttribute)
-        fmt.Println("key.String()")
-        fmt.Println(key.String())
-      }
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.Slice:
