@@ -256,7 +256,7 @@ func (p *process) doRequest(url string) ([]byte, error) {
   fmt.Println("req.Body")
   fmt.Println(req.Body)
 
-  req.body = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:acc="http://www.symxchange.generated.symitar.com/account" xmlns:com="http://www.symxchange.generated.symitar.com/v1/common/dto/common">
+  req.Body = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:acc="http://www.symxchange.generated.symitar.com/account" xmlns:com="http://www.symxchange.generated.symitar.com/v1/common/dto/common">
    <soapenv:Header/>
    <soapenv:Body>
       <acc:getAccount>
