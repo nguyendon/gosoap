@@ -111,7 +111,6 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
         isAttribute = true
         fmt.Println("has attribute 2")
       }
-      }
 
 			tokens.data = append(tokens.data, t)
       tokens.recursiveEncode(v.MapIndex(key).Interface())
