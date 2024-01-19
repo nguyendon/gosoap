@@ -188,13 +188,11 @@ func (c *Client) Do(req *Request) (res *Response, err error) {
   fmt.Println("req.Params")
   fmt.Println(req.Params)
   fmt.Println("flag 0")
+  fmt.Println("p1")
+  fmt.Println(p)
   p.Payload, err = xml.MarshalIndent(p, "", "    ")
-  var x process
-  var temp = xml.Unmarshal(p.Payload, &x)
-  fmt.Println("temp")
-  fmt.Println(temp)
-  fmt.Println("x")
-  fmt.Println(x)
+  fmt.Println("p2")
+  fmt.Println(p)
   if err != nil {
     return nil, err
   }
