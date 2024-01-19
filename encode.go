@@ -21,6 +21,7 @@ func SetCustomEnvelope(prefix string, attrs map[string]string) {
 
 // MarshalXML envelope the body and encode to xml
 func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
+  fmt.Println("process.MarshalXML")
 	tokens := &tokenData{}
 
 	//start envelope
