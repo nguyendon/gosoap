@@ -70,14 +70,10 @@ type tokenData struct {
 	data []xml.Token
 }
 
-func (tokens *tokenData) recursiveEncode(hm interface{}) {
+// Returns true if this iteration is on an attribute
+func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
 	v := reflect.ValueOf(hm)
-  fmt.Println("hm")
-  fmt.Println(hm)
-  fmt.Println("v")
-  fmt.Println(v)
-  fmt.Println("v.Kind()")
-  fmt.Println(v.Kind())
+  isAttribute := false
 
 	switch v.Kind() {
 	case reflect.Map:
@@ -88,15 +84,19 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 					Local: key.String(),
 				},
 			}
-      fmt.Println("key.String()")
-      fmt.Println(key.String())
-      fmt.Println("t")
-      fmt.Println(t)
-      fmt.Println("tokens.data")
-      fmt.Println(tokens.data)
+
+      if key.String() in ["$attribute", "DeviceNumber", "DeviceName", "DeviceType"] {
+        fmt.Println("key.String()")
+        fmt.Println(key.String())
+        fmt.Println("v.Kind()")
+        fmt.Println(v.Kind())
+      }
+      if key.String() == "$attribute" {
+        isAttribute = true
+      }
 
 			tokens.data = append(tokens.data, t)
-			tokens.recursiveEncode(v.MapIndex(key).Interface())
+      isChildAnAttribute := tokens.recursiveEncode(v.MapIndex(key).Interface())
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.Slice:
@@ -123,6 +123,8 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 	case reflect.Struct:
 		tokens.data = append(tokens.data, v.Interface())
 	}
+
+  return false
 }
 
 func (tokens *tokenData) startEnvelope() {
