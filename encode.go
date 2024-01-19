@@ -112,8 +112,12 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
           // It has an attribute to add it to the current key element
           // Add the attributes to the current key element
           for attrName, attrValue := range v.MapIndex(key).Interface().(map[string]interface{})["$attributes"].(map[string]interface{}) {
+            fmt.Println(attrName)
+            fmt.Println(attrValue)
             attr := xml.Attr{Name: xml.Name{Local: attrName}, Value: fmt.Sprintf("%v", attrValue)}
             t.Attr = append(t.Attr, attr)
+            fmt.Println("appended")
+            fmt.Println(t.Attr)
           }
         }
       }
