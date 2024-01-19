@@ -189,8 +189,7 @@ func (c *Client) Do(req *Request) (res *Response, err error) {
   fmt.Println(req.Params)
   fmt.Println("p1")
   fmt.Println(p)
-  //p.Payload, err = xml.MarshalIndent(p, "", "    ")
-  p.Payload, err = xml.Marshal(p, "", "    ")
+  p.Payload, err = xml.MarshalIndent(p, "", "    ")
   if err != nil {
     return nil, err
   }
@@ -223,8 +222,8 @@ func (c *Client) Do(req *Request) (res *Response, err error) {
 }
 
 type process struct {
-  Client     *Client
   Request    *Request
+  Client     *Client
   SoapAction string
   Payload    []byte
 }
