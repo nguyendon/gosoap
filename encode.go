@@ -96,7 +96,6 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
     }
     */
 
-			tokens.data = append(tokens.data, t)
 
       // Check if v.MapIndex(key) is a map[string]interface{}
       // If it is, then check if it has a $attributes key
@@ -110,13 +109,19 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) bool {
           fmt.Println("has attribute")
           hasAttribute = true
           fmt.Println("short circuiting")
+          // It has an attribute to add it to the current key element
+          // Add the attributes to the current key element
+          for attrName, attrValue := range v.MapIndex(key).Interface().(map[string]interface{})["$attributes"].(map[string]interface{}) {
+            attr := xml.Attr{Name: xml.Name{Local: attrName}, Value: fmt.Sprintf("%v", attrValue)}
+            t.Attr = append(t.Attr, attr)
+          }
         }
       }
 
+			tokens.data = append(tokens.data, t)
       if (!hasAttribute) {
         tokens.recursiveEncode(v.MapIndex(key).Interface())
       }
-
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.Slice:
