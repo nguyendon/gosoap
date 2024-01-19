@@ -189,7 +189,8 @@ func (c *Client) Do(req *Request) (res *Response, err error) {
   fmt.Println(req.Params)
   fmt.Println("p1")
   fmt.Println(p)
-  p.Payload, err = xml.MarshalIndent(p, "", "    ")
+  //p.Payload, err = xml.MarshalIndent(p, "", "    ")
+  p.Payload, err = xml.Marshal(p, "", "    ")
   if err != nil {
     return nil, err
   }
