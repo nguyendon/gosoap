@@ -1,6 +1,7 @@
 package gosoap
 
 import (
+  "bytes"
 	"encoding/xml"
 	"fmt"
 	"reflect"
