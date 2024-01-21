@@ -3,6 +3,7 @@ package gosoap
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/iancoleman/orderedmap"
 	"reflect"
 )
 
@@ -72,6 +73,53 @@ type tokenData struct {
 func (tokens *tokenData) recursiveEncode(hm interface{}) {
 	v := reflect.ValueOf(hm)
 
+	if instance, ok := hm.(orderedmap.OrderedMap); ok {
+		keys := instance.Keys()
+		for _, k := range keys {
+			child, _ := instance.Get(k)
+			t := xml.StartElement{
+				Name: xml.Name{
+					Space: "",
+					Local: k,
+				},
+			}
+
+			if k == "$attributes" {
+				continue
+			}
+
+			// k is device information string
+			// child is the DeviceInformation Objection
+			if instance, ok := child.(orderedmap.OrderedMap); ok {
+				keys := instance.Keys()
+				// check if '$attributes' is in keys
+				for _, k := range keys {
+					if k == "$attributes" {
+						// we have found one with a child attribute
+						child, _ := instance.Get(k)
+						// For each of its children, fetch the underlying value
+						if instance, ok := child.(orderedmap.OrderedMap); ok {
+							keys := instance.Keys()
+							for _, k := range keys {
+								value, _ := instance.Get(k)
+								t.Attr = append(t.Attr, xml.Attr{
+									Name:  xml.Name{Space: "", Local: k},
+									Value: value.(string),
+								})
+							}
+						}
+					}
+				}
+			}
+
+			tokens.data = append(tokens.data, t)
+			tokens.recursiveEncode(child)
+			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
+			continue
+		}
+		return
+	}
+
 	switch v.Kind() {
 	case reflect.Map:
 		for _, key := range v.MapKeys() {
@@ -89,9 +137,11 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 			attributeChild := v.MapIndex(key)
 
 			if attributeChild.IsValid() && attributeChild.Kind() == reflect.Interface {
+				// This is deviceinformation
 				actualValue := attributeChild.Elem()
 				if actualValue.Kind() == reflect.Map {
 					attributesKey := reflect.ValueOf("$attributes")
+					// we fetch attribute here
 					attributesValue := actualValue.MapIndex(attributesKey)
 					if attributesValue.IsValid() && attributesValue.Kind() == reflect.Interface {
 						underlyingValue := attributesValue.Elem()
@@ -136,6 +186,8 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 		tokens.data = append(tokens.data, content)
 	case reflect.Struct:
 		tokens.data = append(tokens.data, v.Interface())
+	default:
+		fmt.Println("Can't identify type")
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/iancoleman/orderedmap"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -105,7 +106,7 @@ type Client struct {
 }
 
 // Call call's the method m with Params p
-func (c *Client) Call(m string, p SoapParams) (res *Response, err error) {
+func (c *Client) Call(m string, p orderedmap.OrderedMap) (res *Response, err error) {
 	return c.Do(NewRequest(m, p))
 }
 

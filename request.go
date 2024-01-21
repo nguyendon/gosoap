@@ -2,15 +2,16 @@ package gosoap
 
 import (
 	"fmt"
+	"github.com/iancoleman/orderedmap"
 )
 
 // Request Soap Request
 type Request struct {
 	Method string
-	Params SoapParams
+	Params orderedmap.OrderedMap
 }
 
-func NewRequest(m string, p SoapParams) *Request {
+func NewRequest(m string, p orderedmap.OrderedMap) *Request {
 	return &Request{
 		Method: m,
 		Params: p,
