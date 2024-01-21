@@ -75,9 +75,9 @@ func SoapClientWithConfig(wsdl string, httpClient *http.Client, config *Config) 
 		AutoAction: false,
 	}
 
-  c.once.Do(func() {
-    c.initWsdl()
-  })
+	c.once.Do(func() {
+		c.initWsdl()
+	})
 
 	return c, nil
 }

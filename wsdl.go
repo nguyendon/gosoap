@@ -122,19 +122,18 @@ type xsdElement struct {
 	MaxOccurs   string          `xml:"maxOccurs,attr"`
 	ComplexType *xsdComplexType `xml:"http://www.w3.org/2001/XMLSchema complexType"`
 	SimpleType  *xsdSimpleType  `xml:"http://www.w3.org/2001/XMLSchema simpleType"`
-  Attribute *xsdAttribute     `xml:"http://www.w3.org/2001/XMLSchema attribute"`
+	Attribute   *xsdAttribute   `xml:"http://www.w3.org/2001/XMLSchema attribute"`
 }
 
 type xsdComplexType struct {
-	Name     string         `xml:"name,attr"`
-	Sequence *xsdSequence   `xml:"http://www.w3.org/2001/XMLSchema sequence"`
-  Attribute *xsdAttribute `xml:"http://www.w3.org/2001/XMLSchema attribute"`
-
+	Name      string        `xml:"name,attr"`
+	Sequence  *xsdSequence  `xml:"http://www.w3.org/2001/XMLSchema sequence"`
+	Attribute *xsdAttribute `xml:"http://www.w3.org/2001/XMLSchema attribute"`
 }
 
 type xsdAttribute struct {
-	Name     string           `xml:"name,attr"`
-  SimpleType *xsdSimpleType `xml:"http://www.w3.org/2001/XMLSchema simpleType"`
+	Name       string         `xml:"name,attr"`
+	SimpleType *xsdSimpleType `xml:"http://www.w3.org/2001/XMLSchema simpleType"`
 }
 
 type xsdSimpleType struct {

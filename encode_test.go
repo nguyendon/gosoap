@@ -96,7 +96,7 @@ func TestClient_MarshalXML4(t *testing.T) {
 func TestSetCustomEnvelope(t *testing.T) {
 	SetCustomEnvelope("soapenv", map[string]string{
 		"xmlns:soapenv": "http://schemas.xmlsoap.org/soap/envelope/",
-		"xmlns:tem": "http://tempuri.org/",
+		"xmlns:tem":     "http://tempuri.org/",
 	})
 
 	soap, err := SoapClient("http://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl", nil)

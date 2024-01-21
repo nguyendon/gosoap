@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	soapPrefix = "soap"
+	soapPrefix                            = "soap"
 	customEnvelopeAttrs map[string]string = nil
 )
 
@@ -62,7 +62,7 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 		}
 	}
 
-  return e.Flush()
+	return e.Flush()
 }
 
 type tokenData struct {
@@ -82,35 +82,35 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 				},
 			}
 
-      if key.String() == "$attributes" {
-        continue
-      }
+			if key.String() == "$attributes" {
+				continue
+			}
 
-      attributeChild := v.MapIndex(key)
+			attributeChild := v.MapIndex(key)
 
-      if attributeChild.IsValid() && attributeChild.Kind() == reflect.Interface {
-          actualValue := attributeChild.Elem()
-          if actualValue.Kind() == reflect.Map {
-              attributesKey := reflect.ValueOf("$attributes")
-              attributesValue := actualValue.MapIndex(attributesKey)
-              if attributesValue.IsValid() && attributesValue.Kind() == reflect.Interface {
-                  underlyingValue := attributesValue.Elem()
-                  if underlyingValue.Kind() == reflect.Map {
-                      for iter := underlyingValue.MapRange(); iter.Next(); {
-                          key := iter.Key().Interface()
-                          value := iter.Value().Interface()
-                          t.Attr = append(t.Attr, xml.Attr{
-                            Name: xml.Name{Space: "", Local: key.(string)},
-                            Value: value.(string),
-                          })
-                      }
-                  }
-              }
-          }
-      }
+			if attributeChild.IsValid() && attributeChild.Kind() == reflect.Interface {
+				actualValue := attributeChild.Elem()
+				if actualValue.Kind() == reflect.Map {
+					attributesKey := reflect.ValueOf("$attributes")
+					attributesValue := actualValue.MapIndex(attributesKey)
+					if attributesValue.IsValid() && attributesValue.Kind() == reflect.Interface {
+						underlyingValue := attributesValue.Elem()
+						if underlyingValue.Kind() == reflect.Map {
+							for iter := underlyingValue.MapRange(); iter.Next(); {
+								key := iter.Key().Interface()
+								value := iter.Value().Interface()
+								t.Attr = append(t.Attr, xml.Attr{
+									Name:  xml.Name{Space: "", Local: key.(string)},
+									Value: value.(string),
+								})
+							}
+						}
+					}
+				}
+			}
 
 			tokens.data = append(tokens.data, t)
-      tokens.recursiveEncode(v.MapIndex(key).Interface())
+			tokens.recursiveEncode(v.MapIndex(key).Interface())
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.Slice:
@@ -157,7 +157,7 @@ func (tokens *tokenData) startEnvelope() {
 		e.Attr = make([]xml.Attr, 0)
 		for local, value := range customEnvelopeAttrs {
 			e.Attr = append(e.Attr, xml.Attr{
-				Name: xml.Name{Space: "", Local: local},
+				Name:  xml.Name{Space: "", Local: local},
 				Value: value,
 			})
 		}
@@ -246,7 +246,7 @@ func (tokens *tokenData) startBody(m, n string) error {
 			Local: fmt.Sprintf("%s:%s", m, m),
 		},
 		Attr: []xml.Attr{
-      {Name: xml.Name{Space: "", Local: fmt.Sprintf("xmlns:%s", m)}, Value: n},
+			{Name: xml.Name{Space: "", Local: fmt.Sprintf("xmlns:%s", m)}, Value: n},
 		},
 	}
 
@@ -267,7 +267,7 @@ func (tokens *tokenData) endBody(m string) {
 	r := xml.EndElement{
 		Name: xml.Name{
 			Space: "",
-      Local: fmt.Sprintf("%s:%s", m, m),
+			Local: fmt.Sprintf("%s:%s", m, m),
 		},
 	}
 
