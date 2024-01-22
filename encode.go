@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/iancoleman/orderedmap"
 	"reflect"
+	"strconv"
 )
 
 var (
@@ -186,6 +187,24 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 		tokens.data = append(tokens.data, content)
 	case reflect.Struct:
 		tokens.data = append(tokens.data, v.Interface())
+	case reflect.Int:
+	case reflect.Int8:
+	case reflect.Int16:
+	case reflect.Int32:
+	case reflect.Int64:
+		content := xml.CharData(strconv.FormatInt(v.Int(), 10))
+		tokens.data = append(tokens.data, content)
+	case reflect.Uint:
+	case reflect.Uint8:
+	case reflect.Uint16:
+	case reflect.Uint32:
+	case reflect.Uint64:
+		content := xml.CharData(strconv.FormatUint(v.Uint(), 10))
+		tokens.data = append(tokens.data, content)
+	case reflect.Float32:
+	case reflect.Float64:
+		content := xml.CharData(strconv.FormatFloat(v.Float(), 'f', -1, 64))
+		tokens.data = append(tokens.data, content)
 	default:
 		fmt.Println("Can't identify type")
 	}
