@@ -205,6 +205,9 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 	case reflect.Float64:
 		content := xml.CharData(strconv.FormatFloat(v.Float(), 'f', -1, 64))
 		tokens.data = append(tokens.data, content)
+	case reflect.Bool:
+		content := xml.CharData(strconv.FormatBool(v.Bool()))
+		tokens.data = append(tokens.data, content)
 	default:
 		fmt.Println("Can't identify type")
 	}
