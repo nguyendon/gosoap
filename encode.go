@@ -39,10 +39,11 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 		}
 	}
 
+	hackNamespace := make(map[string]string)
 	tokens.startEnvelope()
 	if c.Client.HeaderParams != nil {
 		tokens.startHeader(c.Client.HeaderName, namespace)
-		tokens.recursiveEncode(c.Client.HeaderParams)
+		tokens.recursiveEncode(c.Client.HeaderParams, hackNamespace)
 		tokens.endHeader(c.Client.HeaderName)
 	}
 
@@ -51,7 +52,10 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 		return err
 	}
 
-	tokens.recursiveEncode(c.Request.Params)
+	if namespace == "http://www.symxchange.generated.symitar.com/filemanagement" {
+		hackNamespace["FileName"] = "filemanagementdto:FileName"
+	}
+	tokens.recursiveEncode(c.Request.Params, hackNamespace)
 
 	//end envelope
 	tokens.endBody(c.Request.Method)
@@ -71,17 +75,25 @@ type tokenData struct {
 	data []xml.Token
 }
 
-func (tokens *tokenData) recursiveEncode(hm interface{}) {
+func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[string]string) {
 	v := reflect.ValueOf(hm)
 
 	if instance, ok := hm.(orderedmap.OrderedMap); ok {
 		keys := instance.Keys()
 		for _, k := range keys {
 			child, _ := instance.Get(k)
+			kTemp := k
+			// Check if k is in the hackNamespace map and if so, use that value instead for local
+			if hackNamespace != nil {
+				if hackNamespace[k] != "" {
+					kTemp = hackNamespace[k]
+				}
+			}
+
 			t := xml.StartElement{
 				Name: xml.Name{
 					Space: "",
-					Local: k,
+					Local: kTemp,
 				},
 			}
 
@@ -90,7 +102,7 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 			}
 
 			// k is device information string
-			// child is the DeviceInformation Objection
+			// child is the DeviceInformation Object
 			if instance, ok := child.(orderedmap.OrderedMap); ok {
 				keys := instance.Keys()
 				// check if '$attributes' is in keys
@@ -114,7 +126,7 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 			}
 
 			tokens.data = append(tokens.data, t)
-			tokens.recursiveEncode(child)
+			tokens.recursiveEncode(child, hackNamespace)
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 			continue
 		}
@@ -161,12 +173,12 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 			}
 
 			tokens.data = append(tokens.data, t)
-			tokens.recursiveEncode(v.MapIndex(key).Interface())
+			tokens.recursiveEncode(v.MapIndex(key).Interface(), hackNamespace)
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
-			tokens.recursiveEncode(v.Index(i).Interface())
+			tokens.recursiveEncode(v.Index(i).Interface(), hackNamespace)
 		}
 	case reflect.Array:
 		if v.Len() == 2 {
@@ -179,7 +191,7 @@ func (tokens *tokenData) recursiveEncode(hm interface{}) {
 			}
 
 			tokens.data = append(tokens.data, t)
-			tokens.recursiveEncode(v.Index(1).Interface())
+			tokens.recursiveEncode(v.Index(1).Interface(), hackNamespace)
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.String:
