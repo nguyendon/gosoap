@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/iancoleman/orderedmap"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -264,16 +263,6 @@ func (p *process) doRequest(url string) ([]byte, error) {
 			return nil, err
 		}
 		p.Client.config.Logger.LogResponse(p.Request.Method, dump)
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
-		if !(p.Client.config != nil && p.Client.config.Dump) {
-			_, err := io.Copy(ioutil.Discard, resp.Body)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return nil, errors.New("unexpected status code: " + resp.Status)
 	}
 
 	return ioutil.ReadAll(resp.Body)
