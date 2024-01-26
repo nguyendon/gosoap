@@ -330,7 +330,6 @@ func (p *process) doRequest(url string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if p.Client.config != nil && p.Client.config.Dump {
 		dump, err := httputil.DumpResponse(resp, true)
