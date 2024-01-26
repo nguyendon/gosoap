@@ -7,9 +7,10 @@ import (
 
 // Response Soap Response
 type Response struct {
-	Body    []byte
-	Header  []byte
-	Payload []byte
+	Body        []byte
+	Header      []byte
+	Payload     []byte
+	Attachments []byte
 }
 
 // FaultError implements error interface

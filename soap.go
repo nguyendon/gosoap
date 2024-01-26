@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/iancoleman/orderedmap"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -104,6 +106,28 @@ type Client struct {
 	config               *Config
 }
 
+func getValueFromContentType(contentType string, key string) (string, error) {
+	parts := strings.Split(contentType, ";")
+	for _, part := range parts {
+		trimmedPart := strings.TrimSpace(part)
+		if strings.HasPrefix(trimmedPart, key+"=") {
+			key := strings.TrimPrefix(trimmedPart, key+"=")
+			key = strings.Trim(key, `"`)
+			return key, nil
+		}
+	}
+	return "", fmt.Errorf("key not found in Content-Type")
+}
+
+func getPrimaryContentType(contentType string) (string, error) {
+	parts := strings.Split(contentType, ";")
+
+	if len(parts) > 0 {
+		return parts[0], nil
+	}
+	return "", fmt.Errorf("primary content type not found in Content-Type")
+}
+
 // Call call's the method m with Params p
 func (c *Client) Call(m string, p orderedmap.OrderedMap) (res *Response, err error) {
 	return c.Do(NewRequest(m, p))
@@ -189,10 +213,62 @@ func (c *Client) Do(req *Request) (res *Response, err error) {
 		return nil, err
 	}
 
-	b, err := p.doRequest(c.Definitions.Services[0].Ports[0].SoapAddresses[0].Location)
+	resp, err := p.doRequest(c.Definitions.Services[0].Ports[0].SoapAddresses[0].Location)
 	if err != nil {
 		return nil, ErrorWithPayload{err, p.Payload}
 	}
+	defer resp.Body.Close()
+
+	contentType := resp.Header.Get("Content-Type")
+	boundary, err := getValueFromContentType(contentType, "boundary")
+
+	var xmlBody, attachmentBody []byte
+	if err == nil {
+		reader := multipart.NewReader(resp.Body, boundary)
+		for {
+			part, err := reader.NextPart()
+			if err != nil {
+				// Handle EOF or other errors
+				if err != io.EOF {
+					fmt.Println("Error reading part:", err)
+				}
+				break
+			}
+
+			// Reading the content of the part
+			partContent, err := ioutil.ReadAll(part)
+			if err != nil {
+				fmt.Println("Error reading part content:", err)
+				continue
+			}
+
+			// Now partContent contains the bytes of the part
+			partContentType := part.Header.Get("Content-Type")
+			partKey, err := getPrimaryContentType(partContentType)
+			if err != nil {
+				fmt.Println("Error reading part content:", err)
+				continue
+			}
+
+			// Process each part based on its content type
+			switch partKey {
+			case "application/xml", "text/xml", "application/xop+xml":
+				xmlBody = partContent
+			case "text/plain":
+				attachmentBody = partContent
+			case "application/octet-stream":
+			default:
+			}
+		}
+	} else {
+		xmlBody, err = io.ReadAll(resp.Body)
+	}
+
+	if err != nil {
+		return nil, ErrorWithPayload{err, p.Payload}
+	}
+
+	b := xmlBody
 
 	var soap SoapEnvelope
 	// err = xml.Unmarshal(b, &soap)
@@ -205,9 +281,10 @@ func (c *Client) Do(req *Request) (res *Response, err error) {
 	err = decoder.Decode(&soap)
 
 	res = &Response{
-		Body:    soap.Body.Contents,
-		Header:  soap.Header.Contents,
-		Payload: p.Payload,
+		Body:        soap.Body.Contents,
+		Header:      soap.Header.Contents,
+		Payload:     p.Payload,
+		Attachments: attachmentBody,
 	}
 	if err != nil {
 		return res, ErrorWithPayload{err, p.Payload}
@@ -223,9 +300,7 @@ type process struct {
 	Payload    []byte
 }
 
-// doRequest makes new request to the server using the c.Method, c.URL and the body.
-// body is enveloped in Do method
-func (p *process) doRequest(url string) ([]byte, error) {
+func (p *process) doRequest(url string) (*http.Response, error) {
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(p.Payload))
 	if err != nil {
 		return nil, err
@@ -265,7 +340,7 @@ func (p *process) doRequest(url string) ([]byte, error) {
 		p.Client.config.Logger.LogResponse(p.Request.Method, dump)
 	}
 
-	return ioutil.ReadAll(resp.Body)
+	return resp, err
 }
 
 func (p *process) httpClient() *http.Client {
