@@ -125,10 +125,18 @@ func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[strin
 				}
 			}
 
-			tokens.data = append(tokens.data, t)
-			tokens.recursiveEncode(child, hackNamespace)
-			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
-			continue
+			// Check if the child is a slice
+			if reflect.ValueOf(child).Kind() == reflect.Slice {
+				for i := 0; i < reflect.ValueOf(child).Len(); i++ {
+					tokens.data = append(tokens.data, t)
+					tokens.recursiveEncode(reflect.ValueOf(child).Index(i).Interface(), hackNamespace)
+					tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
+				}
+			} else {
+				tokens.data = append(tokens.data, t)
+				tokens.recursiveEncode(child, hackNamespace)
+				tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
+			}
 		}
 		return
 	}
