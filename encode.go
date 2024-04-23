@@ -21,6 +21,14 @@ func SetCustomEnvelope(prefix string, attrs map[string]string) {
 	}
 }
 
+func AddCustomEnvelopeAttr(key string, value string) {
+	if customEnvelopeAttrs == nil {
+		customEnvelopeAttrs = make(map[string]string)
+	}
+
+	customEnvelopeAttrs[key] = value
+}
+
 // MarshalXML envelope the body and encode to xml
 func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	tokens := &tokenData{}
@@ -33,7 +41,15 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	namespace := ""
 	if c.Client.Definitions.Types != nil {
 		schema := c.Client.Definitions.Types[0].XsdSchema[0]
-		namespace = schema.TargetNamespace
+
+		// The last one is probably the DTO namespace
+		for _, imp := range schema.Imports {
+			fmt.Println("imp")
+			fmt.Println(imp)
+			customEnvelopeAttrs["xmlns:dto"] = imp.Namespace
+		}
+
+		namespace = c.Client.Definitions.TargetNamespace
 		if namespace == "" && len(schema.Imports) > 0 {
 			namespace = schema.Imports[0].Namespace
 		}
@@ -53,11 +69,11 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	}
 
 	if namespace == "http://www.symxchange.generated.symitar.com/filemanagement" {
-		hackNamespace["FileName"] = "filemanagementdto:FileName"
+		hackNamespace["FileName"] = "dto:FileName"
 	} else if namespace == "http://www.symxchange.generated.symitar.com/transactions" {
-		hackNamespace["AccountNumber"] = "transactionsdto:AccountNumber"
-		hackNamespace["ShareId"] = "transactionsdto:ShareId"
-		hackNamespace["TotalAmount"] = "transactionsdto:TotalAmount"
+		hackNamespace["AccountNumber"] = "dto:AccountNumber"
+		hackNamespace["ShareId"] = "dto:ShareId"
+		hackNamespace["TotalAmount"] = "dto:TotalAmount"
 	}
 	tokens.recursiveEncode(c.Request.Params, hackNamespace)
 
