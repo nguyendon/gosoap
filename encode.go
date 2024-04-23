@@ -54,6 +54,10 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 
 	if namespace == "http://www.symxchange.generated.symitar.com/filemanagement" {
 		hackNamespace["FileName"] = "filemanagementdto:FileName"
+	} else if namespace == "http://www.symxchange.generated.symitar.com/transactions" {
+		hackNamespace["AccountNumber"] = "transactionsdto:AccountNumber"
+		hackNamespace["ShareId"] = "transactionsdto:ShareId"
+		hackNamespace["TotalAmount"] = "transactionsdto:TotalAmount"
 	}
 	tokens.recursiveEncode(c.Request.Params, hackNamespace)
 
