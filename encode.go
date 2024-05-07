@@ -44,8 +44,6 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 
 		// The last one is probably the DTO namespace
 		for _, imp := range schema.Imports {
-			fmt.Println("imp")
-			fmt.Println(imp)
 			customEnvelopeAttrs["xmlns:dto"] = imp.Namespace
 		}
 
@@ -59,7 +57,7 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	tokens.startEnvelope()
 	if c.Client.HeaderParams != nil {
 		tokens.startHeader(c.Client.HeaderName, namespace)
-		tokens.recursiveEncode(c.Client.HeaderParams, hackNamespace)
+		tokens.recursiveEncode(c.Client.HeaderParams, hackNamespace, c.Client.Definitions.Types[0].XsdSchema)
 		tokens.endHeader(c.Client.HeaderName)
 	}
 
@@ -69,13 +67,13 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	}
 
 	if namespace == "http://www.symxchange.generated.symitar.com/filemanagement" {
-		hackNamespace["FileName"] = "dto:FileName"
+		//hackNamespace["FileName"] = "dto:FileName"
 	} else if namespace == "http://www.symxchange.generated.symitar.com/transactions" {
-		hackNamespace["AccountNumber"] = "dto:AccountNumber"
-		hackNamespace["ShareId"] = "dto:ShareId"
-		hackNamespace["TotalAmount"] = "dto:TotalAmount"
+		// hackNamespace["AccountNumber"] = "dto:AccountNumber"
+		// hackNamespace["ShareId"] = "dto:ShareId"
+		// hackNamespace["TotalAmount"] = "dto:TotalAmount"
 	}
-	tokens.recursiveEncode(c.Request.Params, hackNamespace)
+	tokens.recursiveEncode(c.Request.Params, hackNamespace, c.Client.Definitions.Types[0].XsdSchema)
 
 	//end envelope
 	tokens.endBody(c.Request.Method)
@@ -95,7 +93,7 @@ type tokenData struct {
 	data []xml.Token
 }
 
-func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[string]string) {
+func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[string]string, schemas []*xsdSchema) {
 	v := reflect.ValueOf(hm)
 
 	if instance, ok := hm.(orderedmap.OrderedMap); ok {
@@ -108,6 +106,12 @@ func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[strin
 				if hackNamespace[k] != "" {
 					kTemp = hackNamespace[k]
 				}
+			}
+
+			// Check if k is in the dto namespace and if so, prefix it with dto:
+			namespace, err := searchForElementInSchemas(schemas, k)
+			if err == nil && namespace != "" && namespace == customEnvelopeAttrs["xmlns:dto"] {
+				kTemp = "dto:" + k
 			}
 
 			t := xml.StartElement{
@@ -149,12 +153,12 @@ func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[strin
 			if reflect.ValueOf(child).Kind() == reflect.Slice {
 				for i := 0; i < reflect.ValueOf(child).Len(); i++ {
 					tokens.data = append(tokens.data, t)
-					tokens.recursiveEncode(reflect.ValueOf(child).Index(i).Interface(), hackNamespace)
+					tokens.recursiveEncode(reflect.ValueOf(child).Index(i).Interface(), hackNamespace, schemas)
 					tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 				}
 			} else {
 				tokens.data = append(tokens.data, t)
-				tokens.recursiveEncode(child, hackNamespace)
+				tokens.recursiveEncode(child, hackNamespace, schemas)
 				tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 			}
 		}
@@ -201,12 +205,12 @@ func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[strin
 			}
 
 			tokens.data = append(tokens.data, t)
-			tokens.recursiveEncode(v.MapIndex(key).Interface(), hackNamespace)
+			tokens.recursiveEncode(v.MapIndex(key).Interface(), hackNamespace, schemas)
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
-			tokens.recursiveEncode(v.Index(i).Interface(), hackNamespace)
+			tokens.recursiveEncode(v.Index(i).Interface(), hackNamespace, schemas)
 		}
 	case reflect.Array:
 		if v.Len() == 2 {
@@ -219,7 +223,7 @@ func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[strin
 			}
 
 			tokens.data = append(tokens.data, t)
-			tokens.recursiveEncode(v.Index(1).Interface(), hackNamespace)
+			tokens.recursiveEncode(v.Index(1).Interface(), hackNamespace, schemas)
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.String:
@@ -386,4 +390,15 @@ func (tokens *tokenData) endBody(m string) {
 	}
 
 	tokens.data = append(tokens.data, r, b)
+}
+
+func searchForElementInSchemas(schemas []*xsdSchema, elementName string) (namespace string, err error) {
+	for _, schema := range schemas {
+		for _, element := range schema.Elements {
+			if element.Name == elementName {
+				return schema.TargetNamespace, nil
+			}
+		}
+	}
+	return "", nil
 }
