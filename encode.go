@@ -53,11 +53,10 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 		}
 	}
 
-	hackNamespace := make(map[string]string)
 	tokens.startEnvelope()
 	if c.Client.HeaderParams != nil {
 		tokens.startHeader(c.Client.HeaderName, namespace)
-		tokens.recursiveEncode(c.Client.HeaderParams, hackNamespace, c.Client.Definitions.Types[0].XsdSchema)
+		tokens.recursiveEncode(c.Client.HeaderParams, c.Client.Definitions.Types[0].XsdSchema)
 		tokens.endHeader(c.Client.HeaderName)
 	}
 
@@ -66,14 +65,7 @@ func (c process) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 		return err
 	}
 
-	if namespace == "http://www.symxchange.generated.symitar.com/filemanagement" {
-		//hackNamespace["FileName"] = "dto:FileName"
-	} else if namespace == "http://www.symxchange.generated.symitar.com/transactions" {
-		// hackNamespace["AccountNumber"] = "dto:AccountNumber"
-		// hackNamespace["ShareId"] = "dto:ShareId"
-		// hackNamespace["TotalAmount"] = "dto:TotalAmount"
-	}
-	tokens.recursiveEncode(c.Request.Params, hackNamespace, c.Client.Definitions.Types[0].XsdSchema)
+	tokens.recursiveEncode(c.Request.Params, c.Client.Definitions.Types[0].XsdSchema)
 
 	//end envelope
 	tokens.endBody(c.Request.Method)
@@ -93,7 +85,7 @@ type tokenData struct {
 	data []xml.Token
 }
 
-func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[string]string, schemas []*xsdSchema) {
+func (tokens *tokenData) recursiveEncode(hm interface{}, schemas []*xsdSchema) {
 	v := reflect.ValueOf(hm)
 
 	if instance, ok := hm.(orderedmap.OrderedMap); ok {
@@ -101,12 +93,6 @@ func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[strin
 		for _, k := range keys {
 			child, _ := instance.Get(k)
 			kTemp := k
-			// Check if k is in the hackNamespace map and if so, use that value instead for local
-			if hackNamespace != nil {
-				if hackNamespace[k] != "" {
-					kTemp = hackNamespace[k]
-				}
-			}
 
 			// Check if k is in the dto namespace and if so, prefix it with dto:
 			namespace, err := searchForElementInSchemas(schemas, k)
@@ -153,12 +139,12 @@ func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[strin
 			if reflect.ValueOf(child).Kind() == reflect.Slice {
 				for i := 0; i < reflect.ValueOf(child).Len(); i++ {
 					tokens.data = append(tokens.data, t)
-					tokens.recursiveEncode(reflect.ValueOf(child).Index(i).Interface(), hackNamespace, schemas)
+					tokens.recursiveEncode(reflect.ValueOf(child).Index(i).Interface(), schemas)
 					tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 				}
 			} else {
 				tokens.data = append(tokens.data, t)
-				tokens.recursiveEncode(child, hackNamespace, schemas)
+				tokens.recursiveEncode(child, schemas)
 				tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 			}
 		}
@@ -205,12 +191,12 @@ func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[strin
 			}
 
 			tokens.data = append(tokens.data, t)
-			tokens.recursiveEncode(v.MapIndex(key).Interface(), hackNamespace, schemas)
+			tokens.recursiveEncode(v.MapIndex(key).Interface(), schemas)
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
-			tokens.recursiveEncode(v.Index(i).Interface(), hackNamespace, schemas)
+			tokens.recursiveEncode(v.Index(i).Interface(), schemas)
 		}
 	case reflect.Array:
 		if v.Len() == 2 {
@@ -223,7 +209,7 @@ func (tokens *tokenData) recursiveEncode(hm interface{}, hackNamespace map[strin
 			}
 
 			tokens.data = append(tokens.data, t)
-			tokens.recursiveEncode(v.Index(1).Interface(), hackNamespace, schemas)
+			tokens.recursiveEncode(v.Index(1).Interface(), schemas)
 			tokens.data = append(tokens.data, xml.EndElement{Name: t.Name})
 		}
 	case reflect.String:
