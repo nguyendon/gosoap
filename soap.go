@@ -208,12 +208,19 @@ func (c *Client) Do(req *Request) (res *Response, err error) {
 		p.SoapAction = fmt.Sprintf("%s/%s/%s", c.URL, c.Definitions.Services[0].Name, req.Method)
 	}
 
+	start := time.Now()
 	p.Payload, err = xml.MarshalIndent(p, "", "    ")
+	duration := time.Since(start)
+	fmt.Printf("[Go] Mashall time: %8d nanoseconds\n", duration.Nanoseconds())
+
 	if err != nil {
 		return nil, err
 	}
 
+	start = time.Now()
 	resp, err := p.doRequest(c.Definitions.Services[0].Ports[0].SoapAddresses[0].Location)
+	duration = time.Since(start)
+	fmt.Printf("[Go] SymXrequest time: %8d nanoseconds\n", duration.Nanoseconds())
 	if err != nil {
 		return nil, ErrorWithPayload{err, p.Payload}
 	}
