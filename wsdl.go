@@ -186,6 +186,32 @@ func getWsdlBody(u string, c *http.Client) (reader io.ReadCloser, err error) {
 	return r.Body, nil
 }
 
+func getImportedWsdlSchemas(u string, c *http.Client, wsdl *wsdlDefinitions) (err error) {
+	reader, err := getWsdlBody(u, c)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	decoder := xml.NewDecoder(reader)
+	decoder.CharsetReader = charset.NewReaderLabel
+	wsdlInner := xsdSchema{}
+	err = decoder.Decode(&wsdlInner)
+	if err != nil {
+		return err
+	}
+	wsdl.Types[0].XsdSchema = append(wsdl.Types[0].XsdSchema, &wsdlInner)
+
+	for _, imp := range wsdlInner.Imports {
+		err = getImportedWsdlSchemas(imp.SchemaLocation, c, wsdl)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // getWsdlDefinitions sent request to the wsdl url and set definitions on struct
 func getWsdlDefinitions(u string, c *http.Client) (wsdl *wsdlDefinitions, err error) {
 	reader, err := getWsdlBody(u, c)
@@ -197,6 +223,14 @@ func getWsdlDefinitions(u string, c *http.Client) (wsdl *wsdlDefinitions, err er
 	decoder := xml.NewDecoder(reader)
 	decoder.CharsetReader = charset.NewReaderLabel
 	err = decoder.Decode(&wsdl)
+
+	// For each import, get the schema location and fetch the schema
+	for _, imp := range wsdl.Types[0].XsdSchema[0].Imports {
+		err = getImportedWsdlSchemas(imp.SchemaLocation, c, wsdl)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return wsdl, err
 }
